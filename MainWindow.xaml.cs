@@ -7,26 +7,17 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Navigation;
-using System.Windows.Shapes;
 using vSeriousSDK;
 
 namespace vSeriousControlPanel
 {
-    /// <summary>
-    /// Interaction logic for MainWindow.xaml
-    /// </summary>
     public partial class MainWindow : Window
     {
 
-        VSeriousDevice vSerious;
-        bool isActive = false;
+        private VSeriousDevice vSerious;
+        private bool isActive;
 
         public ObservableCollection<LogEntry> Log { get; } = new ObservableCollection<LogEntry>();
         private CancellationTokenSource _readCancellationTokenSource;
@@ -34,54 +25,43 @@ namespace vSeriousControlPanel
         public MainWindow()
         {
             InitializeComponent();
-            PopulateComPorts();
-            UpdateStatus(isActive);
+            UpdateStatus(false);
             DataContext = this;
+
+            PopulateComPorts();
+            vSerious = new VSeriousDevice();
         }
+
 
         private async void ToggleButton_Click(object sender, RoutedEventArgs e)
         {
-            if (vSerious != null || (vSerious != null && isActive))
+            if (!isActive)
             {
                 string selectedComPort = ComPortComboBox.SelectedItem as string;
                 if (!string.IsNullOrEmpty(selectedComPort))
                 {
                     ConnectToDevice(selectedComPort);
+                    await StartReadingAsync();
                 }
-            }
-            else if (vSerious != null && !isActive)
-            {
-                DisconnectFromDevice();
             }
             else
             {
-                if (!isActive)
+                DisconnectFromDevice();
+                if (_readCancellationTokenSource != null)
                 {
-                    UpdateStatus(!isActive);
-                    await StartReadingAsync();
+                    _readCancellationTokenSource.Cancel();
+                    _readCancellationTokenSource.Dispose();
+                    _readCancellationTokenSource = null;
                 }
-                else
-                {
-                    if (_readCancellationTokenSource != null)
-                    {
-                        _readCancellationTokenSource.Cancel();
-                        _readCancellationTokenSource.Dispose();
-                        _readCancellationTokenSource = null;
-                    }
-                    UpdateStatus(!isActive);
-                }
-
             }
         }
 
-        private void ConnectToDevice(string comPath)
+        private void ConnectToDevice(string comPort)
         {
             try
             {
-                if (vSerious == null)
-                {
-                    vSerious = new VSeriousDevice(comPath);
-                }
+                vSerious.SetCOMPort(comPort);
+                vSerious.SetActive(true);
                 UpdateStatus(true);
             }
             catch (Exception ex)
@@ -94,6 +74,7 @@ namespace vSeriousControlPanel
         {
             try
             {
+                vSerious.SetActive(false);
                 UpdateStatus(false);
             }
             catch (Exception ex)
@@ -102,14 +83,6 @@ namespace vSeriousControlPanel
             }
         }
 
-        private void SendData(string data)
-        {
-            if (vSerious != null && isActive)
-            {
-                var bytes = Encoding.ASCII.GetBytes(data);
-                vSerious.Write(bytes);
-            }
-        }
 
         private void PopulateComPorts()
         {
@@ -132,10 +105,6 @@ namespace vSeriousControlPanel
         private void UpdateStatus(bool isActive)
         {
             this.isActive = isActive;
-            if (vSerious != null)
-            {
-                vSerious.SetActive(isActive);
-            }
             StatusLabel.Content = isActive ? "Active" : "Inactive";
             StatusLabel.Foreground = isActive ? Brushes.Green : Brushes.Red;
             StatusIndicator.Fill = isActive ? Brushes.Green : Brushes.Red;
@@ -152,6 +121,15 @@ namespace vSeriousControlPanel
                     Message = "",
                     Color = Brushes.Red
                 });
+            }
+        }
+
+        private void SendData(string data)
+        {
+            if (isActive)
+            {
+                var bytes = Encoding.ASCII.GetBytes(data);
+                vSerious.Write(bytes);
             }
         }
 

@@ -46,7 +46,8 @@
     <Reference Include="System.Xaml">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
-    <Reference Include="vSeriousSDK">
+    <Reference Include="vSeriousSDK, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
       <HintPath>..\vSeriousSDK\bin\Debug\vSeriousSDK.dll</HintPath>
     </Reference>
     <Reference Include="WindowsBase" />
