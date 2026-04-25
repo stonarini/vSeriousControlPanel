@@ -29,7 +29,23 @@ namespace vSeriousControlPanel
             DataContext = this;
 
             PopulateComPorts();
-            vSerious = new VSeriousDevice();
+
+            try
+            {
+                vSerious = new VSeriousDevice();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(
+                    "vSerious driver not found.\n\nInstall the driver and restart this application.\n\nDetails: " + ex.Message,
+                    "vSerious",
+                    MessageBoxButton.OK,
+                    MessageBoxImage.Warning);
+
+                ToggleButton.IsEnabled = false;
+                ComPortComboBox.IsEnabled = false;
+                InputTextBox.IsReadOnly = true;
+            }
         }
 
 
