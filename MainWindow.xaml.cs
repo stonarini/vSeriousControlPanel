@@ -161,16 +161,12 @@ namespace vSeriousControlPanel
             {
                 while (!token.IsCancellationRequested)
                 {
-                    // Assume you have an instance of your VSeriousDevice called vSeriousDevice
-                    //byte[] data = await Task.Run(() => vSerious.Read(1024), token);
-                    byte[] data = await Task.Run(() => System.Text.Encoding.UTF8.GetBytes("Hello there"), token);
-
+                    byte[] data = await Task.Run(() => vSerious.Read(1024), token);
 
                     if (data != null && data.Length > 0)
                     {
                         string receivedText = Encoding.UTF8.GetString(data);
 
-                        // Update UI on the main thread
                         Dispatcher.Invoke(() =>
                         {
                             Log.Add(new LogEntry
@@ -181,8 +177,6 @@ namespace vSeriousControlPanel
                             });
                         });
                     }
-
-                    await Task.Delay(10000);
                 }
             }
             catch (OperationCanceledException) { }
