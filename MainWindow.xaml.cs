@@ -196,6 +196,35 @@ namespace vSeriousControlPanel
                 }
             }
             catch (OperationCanceledException) { }
+            catch (Exception)
+            {
+                // COM handle closed (deactivate or window close). End quietly
+                // — propagating here would crash the async void caller.
+            }
+        }
+
+        protected override void OnClosed(EventArgs e)
+        {
+            try
+            {
+                if (_readCancellationTokenSource != null)
+                {
+                    _readCancellationTokenSource.Cancel();
+                    _readCancellationTokenSource.Dispose();
+                    _readCancellationTokenSource = null;
+                }
+
+                if (isActive && vSerious != null)
+                {
+                    try { vSerious.SetActive(false); } catch { /* best-effort */ }
+                }
+
+                vSerious?.Dispose();
+            }
+            finally
+            {
+                base.OnClosed(e);
+            }
         }
     }
 }
